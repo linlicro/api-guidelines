@@ -210,30 +210,45 @@ The term "REST" is used throughout this document to mean services that are in th
 ### 3.1. 推荐阅读
 Understanding the philosophy behind the REST Architectural Style is recommended for developing good HTTP-based services.
 If you are new to RESTful design, here are some good resources:
+理解REST架构风格的理念，有助于开发优秀的基于HTTP的服务。如果你是刚接触到RESTful设计，请阅览下面的优秀资料:
 
 [REST on Wikipedia][rest-on-wikipedia] -- Overview of common definitions and core ideas behind REST.
+[REST on Wikipedia][rest-on-wikipedia]; 中文翻译: [表现层状态转换][表现层状态转换] -- 维基百科上关于REST的核心概念与思想的介绍。
 
 [REST Dissertation][fielding] -- The chapter on REST in Roy Fielding's dissertation on Network Architecture, "Architectural Styles and the Design of Network-based Software Architectures"
+[REST论文][fielding] -- Roy Fielding网络架构论文中关于REST的章节，“架构风格与基于网络的软件体系结构设计”。
 
 [RFC 7231][rfc-7231] -- Defines the specification for HTTP/1.1 semantics, and is considered the authoritative resource.
+[RFC 7231][rfc-7231] -- 定义HTTP/1.1 语义规范的权威资源。
 
 [REST in Practice][rest-in-practice] -- Book on the fundamentals of REST.
+[REST 实践][rest-in-practice] —— 关于REST的基础知识的入门书。
 
-## 4. Interpreting the guidelines
-### 4.1. Application of the guidelines
+## 4. 解读指导
+### 4.1. 应用指南
 These guidelines are applicable to any REST API exposed publicly by Microsoft or any partner service.
+这些准则适用于Microsoft或合作伙伴公开的任何REST API。
 Private or internal APIs SHOULD also try to follow these guidelines because internal services tend to eventually be exposed publicly.
- Consistency is valuable to not only external customers but also internal service consumers, and these guidelines offer best practices useful for any service.
+私有的或内部的APIs应该尝试遵循这些指导方针，因为内部服务最终会被公开。
+Consistency is valuable to not only external customers but also internal service consumers, and these guidelines offer best practices useful for any service.
+一致性不仅对外客户有价值，同时对内部人员也有价值，这些准则对任务服务有提供了有用价值。
 
 There are legitimate reasons for exemption from these guidelines.
+有合理理由场景可不遵循这些准则。
 Obviously, a REST service that implements or must interoperate with some externally defined REST API must be compatible with that API and not necessarily these guidelines.
+比如REST服务的实现或必须与某些外部REST API相互操作而需要兼容这些API，而无法满足这些准则。
 Some services MAY also have special performance needs that require a different format, such as a binary protocol.
+还有一些服务可能要特殊的性能要求而采用其他合适，比如二进制协议。
 
-### 4.2. Guidelines for existing services and versioning of services
+### 4.2. 现有服务和服务版本控制的指南
 We do not recommend making a breaking change to a service that predates these guidelines simply for the sake of compliance.
+我们不建议仅仅为了遵循准则而对现有的服务进行重大改变。
 The service SHOULD try to become compliant at the next version release when compatibility is being broken anyway.
+当服务兼容性会被破坏时，该服务应该尝试在下一个发布版本变的合规。
 When a service adds a new API, that API SHOULD be consistent with the other APIs of the same version.
-So if a service was written against version 1.0 of the guidelines, new APIs added incrementally to the service SHOULD also follow version 1.0. The service can then upgrade to align with the latest version of the guidelines at the service's next major release.
+当一个服务添加新的API，该API应该与同版本的其他APIs保持一致。
+So if a service was written against version 1.0 of the guidelines, new APIs added incrementally to the service SHOULD also follow version  1.0. The service can then upgrade to align with the latest version of the guidelines at the service's next major release.
+因此一个服务针对1.0版本准则编写，向该服务增量新增的APIs应该遵循版本1.0准则。本服务能在下一个大版本升级时，再去遵循准则。
 
 ### 4.3. Requirements language
 The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
@@ -2394,6 +2409,7 @@ note right of App Server: Update status and cache new "since" token
 [rfc-7231]: https://tools.ietf.org/html/rfc7231
 [rest-in-practice]: http://www.amazon.com/REST-Practice-Hypermedia-Systems-Architecture/dp/0596805829/
 [rest-on-wikipedia]: http://en.wikipedia.org/wiki/Representational_state_transfer
+[表现层状态转换]: https://wiki.tw.wjbk.site/wiki/REST
 [rfc-5789]: http://tools.ietf.org/html/rfc5789
 [rfc-5988]: http://tools.ietf.org/html/rfc5988
 [rfc-3339]: https://tools.ietf.org/html/rfc3339
