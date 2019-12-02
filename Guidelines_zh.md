@@ -31,22 +31,22 @@ This document establishes the guidelines Microsoft REST APIs SHOULD follow so RE
 - [1. 摘要](#1-摘要)
 - [2. 目录](#2-目录)
 - [3. 介绍](#3-介绍)
-    - [3.1. 推荐阅读](#31-recommended-reading)
-- [4. Interpreting the guidelines](#4-interpreting-the-guidelines)
-    - [4.1. Application of the guidelines](#41-application-of-the-guidelines)
-    - [4.2. Guidelines for existing services and versioning of services](#42-guidelines-for-existing-services-and-versioning-of-services)
-    - [4.3. Requirements language](#43-requirements-language)
-    - [4.4. License](#44-license)
-- [5. Taxonomy](#5-taxonomy)
-    - [5.1. Errors](#51-errors)
-    - [5.2. Faults](#52-faults)
-    - [5.3. Latency](#53-latency)
-    - [5.4. Time to complete](#54-time-to-complete)
-    - [5.5. Long running API faults](#55-long-running-api-faults)
-- [6. Client guidance](#6-client-guidance)
-    - [6.1. Ignore rule](#61-ignore-rule)
-    - [6.2. Variable order rule](#62-variable-order-rule)
-    - [6.3. Silent fail rule](#63-silent-fail-rule)
+    - [3.1. 推荐阅读](#31-推荐阅读)
+- [4. 解读指导](#4-解读指导)
+    - [4.1. 应用指南](#41-应用指南)
+    - [4.2. 现有服务和服务版本控制的指南](#42-现有服务和服务版本控制的指南)
+    - [4.3. 语言要求](#43-语言要求)
+    - [4.4. 许可证](#44-许可证)
+- [5. 分类](#5-分类)
+    - [5.1. 错误](#51-错误)
+    - [5.2. 故障](#52-故障)
+    - [5.3. 延迟](#53-延迟)
+    - [5.4. 完成时间](#54-完成时间)
+    - [5.5. 长时间运行的API故障](#55-长时间运行的API故障)
+- [6. 客户端指导](#6-客户端指导)
+    - [6.1. 忽视规则](#61-忽视规则)
+    - [6.2. 变量排序规则](#62-变量排序规则)
+    - [6.3. 无声失败规则](#63-无声失败规则)
 - [7. Consistency fundamentals](#7-consistency-fundamentals)
     - [7.1. URL structure](#71-url-structure)
     - [7.2. URL length](#72-url-length)
@@ -250,65 +250,100 @@ When a service adds a new API, that API SHOULD be consistent with the other APIs
 So if a service was written against version 1.0 of the guidelines, new APIs added incrementally to the service SHOULD also follow version  1.0. The service can then upgrade to align with the latest version of the guidelines at the service's next major release.
 因此一个服务针对1.0版本准则编写，向该服务增量新增的APIs应该遵循版本1.0准则。本服务能在下一个大版本升级时，再去遵循准则。
 
-### 4.3. Requirements language
+### 4.3. 语言要求
 The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
+本文档中的关键字 "MUST"(必须), "MUST NOT"(禁止), "REQUIRED"(需要), "SHALL"(将要), "SHALL NOT"(最好不好), "SHOULD"(应该), "SHOULD NOT"(不应该), "RECOMMENDED"(推荐), "MAY"(可能), and "OPTIONAL"(可选) 的详细解析请见[RFC 2119](https://www.ietf.org/rfc/rfc2119.txt)。
 
-### 4.4. License
+### 4.4. 许可证
 
 This work is licensed under the Creative Commons Attribution 4.0 International License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+本作品根据知识共享署名4.0国际许可协议授权。如需查看本授权的副本，请访问 <http://creativecommons.org/licenses/by/4.0/> 或致函 PO Box 1866, Mountain View, CA 94042, USA.
 
-## 5. Taxonomy
+注：署名 4.0 国际，也就是允许在任何媒介以任何形式复制、发行本作品，允许修改、转换或以本作品为基础进行创作。允许任何用途，甚至商业目的。
+
+## 5. 分类
 As part of onboarding to Microsoft REST API Guidelines, services MUST comply with the taxonomy defined below.
+Microsoft REST API准备的首要部分，服务必须遵守以下定义的分类(taxonomy的翻译怪怪的...)。
 
-### 5.1. Errors
+### 5.1. 错误
 Errors, or more specifically Service Errors, are defined as a client passing invalid data to the service and the service _correctly_  rejecting that data.
+错误，或者具体的业务错误，因客服端向服务的输入非法的数据而拒绝该请求。
 Examples include invalid credentials, incorrect parameters, unknown version IDs, or similar.
+包括无效的凭证，错误的入参，未知的版本号等。
 These are generally "4xx" HTTP error codes and are the result of a client passing incorrect or invalid data.
+客户端传递错误的或者不合法的数据时，通常返回 “4XX” 的 HTTP 错误代码。
 
 Errors do _not_ contribute to overall API availability.
+错误不会影响API的整体可用性。
 
-### 5.2. Faults
+注：错误可以理解成客户端参数错误，通常返回“4XX”状态码，并不影响整体的API使用。
+
+### 5.2. 故障
 Faults, or more specifically Service Faults, are defined as the service failing to correctly return in response to a valid client request.
 These are generally "5xx" HTTP error codes.
+故障, 更具体的说是服务故障，服务无法正常地返回数据以响应客户端的正确请求，通常返回"5xx"HTTP错误代码。
 
 Faults _do_ contribute to the overall API availability.
+故障会影响全部的API可用性。
 
 Calls that fail due to rate limiting or quota failures MUST NOT count as faults.
+因限流或者配额失败的请求不算做故障。
 Calls that fail as the result of a service fast-failing requests (often for its own protection) do count as faults.
+因服务的快速失败(自身的保护机制)会被视为故障。
 
-### 5.3. Latency
+### 5.3. 延迟
 Latency is defined as how long a particular API call takes to complete, measured as closely to the client as possible.
+延迟是指一个特定API请求完成需花费的时间，尽可能用客户端来测量。
 This metric applies to both synchronous and asynchronous APIs in the same way.
+这个度量准则对同步和异步API都适用。
 For long running calls, the latency is measured on the initial request and measures how long that call (not the overall operation) takes to complete.
+针对长时间运行的请求，延迟是初始化后的第一次请求所需要的时长(而不是整个操作)。
 
-### 5.4. Time to complete
+### 5.4. 完成时间
 Services that expose long operations MUST track "Time to Complete" metrics around those operations.
+暴露操作需耗时很长的服务必须跟进"完成时间"指标。
 
-### 5.5. Long running API faults
+### 5.5. 长时间运行的API故障
 For a Long Running API, it's possible for both the initial request which begins the operation and the request which retrieves the results to technically work (each passing back a 200) but for the underlying operation to have failed.
+针对长时间运行的API，很可能请求都是正常的(每次返回200 HTTP代码)，但后端服务是失败的。
 Long Running faults MUST roll up as faults into the overall Availability metrics.
+这类长期运行故障必须汇总到总体可用性指标中。
 
-## 6. Client guidance
+## 6. 客户端指导
 To ensure the best possible experience for clients talking to a REST service, clients SHOULD adhere to the following best practices:
+为保障客户端更好地使用REST服务，客户端需遵循以下最佳实践:
 
-### 6.1. Ignore rule
+### 6.1. 忽视规则
 For loosely coupled clients where the exact shape of the data is not known before the call, if the server returns something the client wasn't expecting, the client MUST safely ignore it.
+对于松耦合的客户端只有在发生真实调用服务时才能确认数据的确切定义，如果服务有时返回的数据非客户端预期的，客户端必须安全忽视它。
   
 Some services MAY add fields to responses without changing versions numbers.
+有些服务可能在不更改版本号的情况下新增字段。
 Services that do so MUST make this clear in their documentation and clients MUST ignore unknown fields.
+此类服务必须在其文档中注明，客户端必须忽略这些未知字段。
 
-### 6.2. Variable order rule
+注：一个已发布的在线接口服务，如果不修改版本而增加字段，那么一定不能影响已有的客户端调用。
+
+### 6.2. 变量排序规则
 Clients MUST NOT rely on the order in which data appears in JSON service responses.
+客户端禁止依赖服务的响应的JSON格式数据的顺序。
 For example, clients SHOULD be resilient to the reordering of fields within a JSON object.
+例如，客服端需弹性地解析处理重排序的JSON格式数据。
 When supported by the service, clients MAY request that data be returned in a specific order.
+当服务的支持时，客户端可以请求以特定排序返回数据。
 For example, services MAY support the use of the _$orderBy_ querystring parameter to specify the order of elements within a JSON array.
+例如，服务端可能支持请求参数_$orderBy_来指定特定的排序返回数据。
 Services MAY also explicitly specify the ordering of some elements as part of the service contract.
+服务端也可以在服务约定中明确指定一些字段可进行排序。
 For example, a service MAY always return a JSON object's "type" information as the first field in an object to simplify response parsing on the client.
+例如，服务端可以一直返回JSON对象信息的第一个字段是"type"，用来简化客户端解析响应的难度。
 Clients MAY rely on ordering behavior explicitly identified by the service.
+客服端可以依赖服务端明确指定的排序行为。
 
-### 6.3. Silent fail rule
+### 6.3. 无声失败规则
 Clients requesting OPTIONAL server functionality (such as optional headers) MUST be resilient to the server ignoring that particular functionality.
+当客户端请求时带上了可选的服务功能(例如，可选的头部信息)，必须对服务端的返回格式做一定兼容，以忽略这些特点功能。
 
 ## 7. Consistency fundamentals
 ### 7.1. URL structure
