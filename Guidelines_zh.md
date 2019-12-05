@@ -46,25 +46,25 @@ This document establishes the guidelines Microsoft REST APIs SHOULD follow so RE
   - [6.1. 忽视规则](#61-忽视规则)
   - [6.2. 变量排序规则](#62-变量排序规则)
   - [6.3. 无声失败规则](#63-无声失败规则)
-- [7. Consistency fundamentals](#7-consistency-fundamentals)
-  - [7.1. URL structure](#71-url-structure)
-  - [7.2. URL length](#72-url-length)
-  - [7.3. Canonical identifier](#73-canonical-identifier)
-  - [7.4. Supported methods](#74-supported-methods)
+- [7. 基础](#7-基础)
+  - [7.1. URL结构](#71-URL结构)
+  - [7.2. URL长度](#72-URL长度)
+  - [7.3. 规范标识符](#73-规范标识符)
+  - [7.4. 支持的方法](#74-支持的方法)
     - [7.4.1. POST](#741-post)
     - [7.4.2. PATCH](#742-patch)
-    - [7.4.3. Creating resources via PATCH (UPSERT semantics)](#743-creating-resources-via-patch-upsert-semantics)
-    - [7.4.4. Options and link headers](#744-options-and-link-headers)
-  - [7.5. Standard request headers](#75-standard-request-headers)
-  - [7.6. Standard response headers](#76-standard-response-headers)
-  - [7.7. Custom headers](#77-custom-headers)
-  - [7.8. Specifying headers as query parameters](#78-specifying-headers-as-query-parameters)
-  - [7.9. PII parameters](#79-pii-parameters)
-  - [7.10. Response formats](#710-response-formats)
-    - [7.10.1. Clients-specified response format](#7101-clients-specified-response-format)
-    - [7.10.2. Error condition responses](#7102-error-condition-responses)
-  - [7.11. HTTP Status Codes](#711-http-status-codes)
-  - [7.12. Client library optional](#712-client-library-optional)
+    - [7.4.3. 通过PATCH创建资源(UPSERT 定义)](#743-通过PATCH创建资源(UPSERT-定义))
+    - [7.4.4. Options 标头 和 link headers 标签](#744-Options-标头-和-link-headers-标签)
+  - [7.5. 标准的请求标头](#75-标准的请求标头)
+  - [7.6. 标准响应标头](#76-标准响应标头)
+  - [7.7. 自定义标头](#77-自定义标头)
+  - [7.8. 指定头部为查询参数](#78-指定头部为查询参数)
+  - [7.9. PII参数](#79-PII参数)
+  - [7.10. 响应格式](#710-响应格式)
+    - [7.10.1. 客户端指定响应格式](#7101-客户端指定响应格式)
+    - [7.10.2. 错误的条件响应](#7102-错误的条件响应)
+  - [7.11. HTTP状态代码](#711-HTTP状态代码)
+  - [7.12. 可选的客户端库](#712-可选的客户端库)
 - [8. CORS](#8-cors)
   - [8.1. Client guidance](#81-client-guidance)
     - [8.1.1. Avoiding preflight](#811-avoiding-preflight)
@@ -384,7 +384,7 @@ https://api.contoso.com/v1.0/people/jdoe@contoso.com/inbox
 An example URL that is not friendly is:
 一个不友好的URL例子:
 
-```
+```text
 https://api.contoso.com/EWS/OData/Users('jdoe@microsoft.com')/Folders('AAMkADdiYzI1MjUzLTk4MjQtNDQ1Yy05YjJkLWNlMzMzYmIzNTY0MwAuAAAAAACzMsPHYH6HQoSwfdpDx-2bAQCXhUk6PC1dS7AERFluCgBfAAABo58UAAA=')
 ```
 
@@ -395,7 +395,7 @@ Services MAY use URLs as values.
 For example, the following is acceptable:
 例如，下面的URL是可以接受的:
 
-```
+```text
 https://api.contoso.com/v1.0/items?url=https://resources.contoso.com/shoes/fancy
 ```
 
@@ -415,8 +415,8 @@ Services that can generate URLs longer than 2,083 characters MUST make accommoda
 Here are some sources for determining what target clients support:
 不同客户端支持的最长 URL 长度参见以下资料：
 
-* [http://stackoverflow.com/a/417184](http://stackoverflow.com/a/417184)
- * [https://blogs.msdn.microsoft.com/ieinternals/2014/08/13/url-length-limits/](https://blogs.msdn.microsoft.com/ieinternals/2014/08/13/url-length-limits/)
+1. [http://stackoverflow.com/a/417184](http://stackoverflow.com/a/417184)
+2. [https://blogs.msdn.microsoft.com/ieinternals/2014/08/13/url-length-limits/](https://blogs.msdn.microsoft.com/ieinternals/2014/08/13/url-length-limits/)
 
 Also note that some technology stacks have hard and adjustable URL limits, so keep this in mind as you design your services.
 还请注意，一些技术栈有强制的的URL限定，所以在设计服务时要记住这一点。
@@ -434,7 +434,7 @@ The stable identifier is not required to be a GUID.
 An example of a URL containing a canonical identifier is:
 一个包含规范的标识符的URL 例子:
 
-```
+```text
 https://api.contoso.com/v1.0/people/7011042402/inbox
 ```
 
@@ -576,124 +576,189 @@ Content-Encoding | 必须 | GZIP或DEFLATE，视情况而定
 Preference-Applied | 可选 | 是否应用了首选项请求头中指示的首选项
 ETag | 可选 | ETag响应头字段为请求的变量提供实体标记的当前值。与If-Match、If-None-Match和If-Range一起使用，实现乐观并发控制
 
-### 7.7. Custom headers
+### 7.7. 自定义标头
 
 Custom headers MUST NOT be required for the basic operation of a given API.
+基础操作的API不应该支持自定义标头。
 
 Some of the guidelines in this document prescribe the use of nonstandard HTTP headers.
+本文档中的一些规则规定了非标准HTTP标头的使用。
 In addition, some services MAY need to add extra functionality, which is exposed via HTTP headers.
+此外，一些服务可以添加额外的功能，这些功能通过HTTP标头公开。
 The following guidelines help maintain consistency across usage of custom headers.
+以下准则有助于保持自定义标头的使用一致性。
 
 Headers that are not standard HTTP headers MUST have one of two formats:
+非标准的HTTP标头必须具有以下两个格式之一:
 
-1. A generic format for headers that are registered as "provisional" with IANA ([RFC 3864][rfc-3864])
-2. A scoped format for headers that are too usage-specific for registration
+1. 使用IANA([RFC 3864][rfc-3864])注册为"临时"的标头的通用格式。
+2. 注册标头的特定格式为特定用途。
 
 These two formats are described below.
+这两种格式如下所述。
 
-### 7.8. Specifying headers as query parameters
+### 7.8. 指定头部为查询参数
 
 Some headers pose challenges for some scenarios such as AJAX clients, especially when making cross-domain calls where adding headers MAY not be supported.
+有些标头对某些场景(如AJAX客户端)不兼容，特别是在不支持添加标头的跨域调用时。
 As such, some headers MAY be accepted as Query Parameters in addition to headers, with the same naming as the header:
+因此，除了常见的标头信息外，一些标头信息可以允许被作为查询参数传递给服务端，其命名与请求头中的名称保持一致:
 
 Not all headers make sense as query parameters, including most standard HTTP headers.
+并不是所有的标头都可以用作查询参数，包括大多数标准HTTP标头。
 
 The criteria for considering when to accept headers as parameters are:
+考虑何时接受标头作为参数的标准如下:
 
-1. Any custom headers MUST be also accepted as parameters.
-2. Required standard headers MAY be accepted as parameters.
-3. Required headers with security sensitivity (e.g., Authorization header) MIGHT NOT be appropriate as parameters; the service owner SHOULD evaluate these on a case-by-case basis.
+1. 任何自定义标头也必须作为参数接受。
+2. 请求的标准标头也可以作为参数接受。
+3. 具有安全敏感性的必需标头(例如，授权标头 Authorization)可能不适合作为参数;服务所有者应该具体情况具体分析。
 
 The one exception to this rule is the Accept header.
+此规则的一个例外是Accept头。
 It's common practice to use a scheme with simple names instead of the full functionality described in the HTTP specification for Accept.
+使用具有简单名称的方案，而不是使用HTTP规范中描述的用于Accept的完整功能，这是一种常见的实践。
 
-### 7.9. PII parameters
+### 7.9. PII参数
 
 Consistent with their organization's privacy policy, clients SHOULD NOT transmit personally identifiable information (PII) parameters in the URL (as part of path or query string) because this information can be inadvertently exposed via client, network, and server logs and other mechanisms.
+普遍的隐私政策一致，客户端不应该在URL中传输个人身份信息(PII[personally identifiable information])参数(作为路径或查询参数)，因为这些信息可能通过客户端、网络和服务器日志和其他机制无意暴露出来。
 
 Consequently, a service SHOULD accept PII parameters transmitted as headers.
+因此，服务应该接受PII参数作为标头传输。
 
 However, there are many scenarios where the above recommendations cannot be followed due to client or software limitations.
+然而在实践中，由于客户端或软件的限制，在许多情况下无法遵循上述建议。
 To address these limitations, services SHOULD also accept these PII parameters as part of the URL consistent with the rest of these guidelines.
+为了解决这些限制，服务也应该接受这些PII参数作为URL的一部分，与本指导原则的其余部分保持一致。
 
 Services that accept PII parameters -- whether in the URL or as headers -- SHOULD be compliant with privacy policy specified by their organization's engineering leadership.
+接受PII参数(无论是在URL中还是作为标头)的服务 应该符合其组织的隐私保护原则。
 This will typically include recommending that clients prefer headers for transmission and implementations adhere to special precautions to ensure that logs and other service data collection are properly handled.
+通常建议包括：客户端使用标头进行加密传输，并且实现要遵循特殊的预防措施，以确保日志和其他服务数据收集得到正确的处理。
 
-### 7.10. Response formats
+注：PII——个人可标识信息。比如家庭地址，身份证信息。
+
+### 7.10. 响应格式
 
 For organizations to have a successful platform, they must serve data in formats developers are accustomed to using, and in consistent ways that allow developers to handle responses with common code.
+一个成功的平台，往往提供可读性较好并且一致的响应结果，并允许开发人员使用公共 Http 代码处理响应。
 
 Web-based communication, especially when a mobile or other low-bandwidth client is involved, has moved quickly in the direction of JSON for a variety of reasons, including its tendency to be lighter weight and its ease of consumption with JavaScript-based clients.
+基于Web的通信，特别是当涉及移动端或其他低带宽客户端时，我们推荐使用JSON作为传输格式。主要是由于其更轻量以及易于与JavaScript交互。
 
 JSON property names SHOULD be camelCased.
+JSON属性名应该采用camelCasedE驼峰命名规范。
 
 Services SHOULD provide JSON as the default encoding.
+服务应该提供JSON作为默认输出格式。
 
-#### 7.10.1. Clients-specified response format
+#### 7.10.1. 客户端指定响应格式
 
 In HTTP, response format SHOULD be requested by the client using the Accept header.
+在HTTP中，客户端应该使用Accept头请求响应格式。
 This is a hint, and the server MAY ignore it if it chooses to, even if this isn't typical of well-behaved servers.
+服务端可以选择性的忽略
 Clients MAY send multiple Accept headers and the service MAY choose one of them.
+如客户端发送多个Accept标头，服务可以选择其中一个格式进行响应。
 
 The default response format (no Accept header provided) SHOULD be application/json, and all services MUST support application/json.
+默认的响应格式(没有提供Accept头)应该是application/json，并且所有服务必须支持application/json。
 
-Accept Header    | Response type                      | Notes
----------------- | ---------------------------------- | -------------------------------------------
-application/json | Payload SHOULD be returned as JSON | Also accept text/javascript for JSONP cases
+接受标头 | 响应类型 | 备注
+---- | -----------| -------
+application/json | 必须是返回json格式 | 同样接受JSONP请求的text/JavaScript
 
 ```http
 GET https://api.contoso.com/v1.0/products/user
 Accept: application/json
 ```
 
-#### 7.10.2. Error condition responses
+#### 7.10.2. 错误的条件响应
 
 For non-success conditions, developers SHOULD be able to write one piece of code that handles errors consistently across different Microsoft REST API Guidelines services.
+对于调用不成功的情况，开发人员应该能够用相同的代码库一致地处理错误。
 This allows building of simple and reliable infrastructure to handle exceptions as a separate flow from successful responses.
+这允许构建简单可靠的基础架构来处理异常，将异常作为成功响应的独立处理流程来处理。
 The following is based on the OData v4 JSON spec.
+下面的代码基于OData v4 JSON规范。
 However, it is very generic and does not require specific OData constructs.
+但是，它非常通用，不需要特定的OData构造。
 APIs SHOULD use this format even if they are not using other OData constructs.
+即使api没有使用其他OData结构，也应该使用这种格式。
 
 The error response MUST be a single JSON object.
+错误响应必须是单个JSON对象。
 This object MUST have a name/value pair named "error." The value MUST be a JSON object.
+该对象必须有一个名为“error”的 名称/值（name/value） 对。该值必须是JSON对象。
 
 This object MUST contain name/value pairs with the names "code" and "message," and it MAY contain name/value pairs with the names "target," "details" and "innererror."
+这个对象必须包含名称“code”和“message”的 键值对，并且它建议包含譬如“target”、“details”和 “innererror” 的键值对。
 
 The value for the "code" name/value pair is a language-independent string.
+“code”键值对的值 是一个与语言无关的字符串。
 Its value is a service-defined error code that SHOULD be human-readable.
+它的值是该服端务定义的错误代码，应该简单可读。
 This code serves as a more specific indicator of the error than the HTTP error code specified in the response.
+与响应中指定的HTTP错误代码相比，此代码用作错误的更具体的指示。
 Services SHOULD have a relatively small number (about 20) of possible values for "code," and all clients MUST be capable of handling all of them.
+服务应该具有相对较少的“code”数量(别超过20个)，并且所有客户端必须能够处理所有这些错误信息。
 Most services will require a much larger number of more specific error codes, which are not interesting to all clients.
+大多数服务将需要更大数量的更具体的错误代码以满足所有的客户端请求。
 These error codes SHOULD be exposed in the "innererror" name/value pair as described below.
+这些错误代码应该在“innererror” 键值对中公开，如下所述。
 Introducing a new value for "code" that is visible to existing clients is a breaking change and requires a version increase.
+为现有客户端可见的“代码”引入新值是一个破坏性的更改，需要增加版本。
 Services can avoid breaking changes by adding new error codes to "innererror" instead.
+服务可以通过向“innererror”添加新的错误代码来避免中断服务更改。
 
 The value for the "message" name/value pair MUST be a human-readable representation of the error.
+“message”键值对的值 必须是错误提示消息，必须是可读且易于理解。
 It is intended as an aid to developers and is not suitable for exposure to end users.
+它旨在是帮助开发人员，不适合暴露给最终用户。
 Services wanting to expose a suitable message for end users MUST do so through an [annotation][odata-json-annotations] or custom property.
+想要为最终用户公开合适消息的服务必须通过[annotation][odata-json-annotations]注释或其他自定义属性来公开。
 Services SHOULD NOT localize "message" for the end user, because doing so might make the value unreadable to the app developer who may be logging the value, as well as make the value less searchable on the Internet.
+服务不应该为最终用户本地化“message”，因为这样对于开发者变得非常不友好并且难以处理。
 
 The value for the "target" name/value pair is the target of the particular error (e.g., the name of the property in error).
+“target”键值对的值 是指向错误的具体的目标(例如，错误中属性的名称)。
 
 The value for the "details" name/value pair MUST be an array of JSON objects that MUST contain name/value pairs for "code" and "message," and MAY contain a name/value pair for "target," as described above.
+“details”键值对的值 必须是JSON对象数组，其中必须包含“code”和“message”的键值对，还可能包含“target”的键值对，如上所述。
 The objects in the "details" array usually represent distinct, related errors that occurred during the request.
+“details”数组中的对象通常表示请求期间发生的不同的、相关的错误。
+
 See example below.
+请参见下面的例子。
 
 The value for the "innererror" name/value pair MUST be an object.
+“innererror”键值对的值 必须是一个对象。
 The contents of this object are service-defined.
+这个对象的内容是服务端定义的。
 Services wanting to return more specific errors than the root-level code MUST do so by including a name/value pair for "code" and a nested "innererror." Each nested "innererror" object represents a higher level of detail than its parent.
+想要返回比根级别代码更具体的错误的服务，必须包含“code”的键值对和嵌套的“innererror”。每个嵌套的“innererror”对象表示比其父对象更高层次的细节。
 When evaluating errors, clients MUST traverse through all of the nested "innererrors" and choose the deepest one that they understand.
+在评估错误时，客户端必须遍历所有嵌套的“内部错误”，并选择他们能够理解的最深的一个。
 This scheme allows services to introduce new error codes anywhere in the hierarchy without breaking backwards compatibility, so long as old error codes still appear.
+这个方案允许服务在层次结构的任何地方引入新的错误代码，而不破坏向后兼容性，只要旧的错误代码仍然出现。
 The service MAY return different levels of depth and detail to different callers.
+服务可以向不同的调用者返回不同级别的深度和细节。
 For example, in development environments, the deepest "innererror" MAY contain internal information that can help debug the service.
+例如，在开发环境中，最深的“innererror”可能包含有助于调试服务的内部信息。
 To guard against potential security concerns around information disclosure, services SHOULD take care not to expose too much detail unintentionally.
+为了防范信息公开带来的潜在安全问题，服务应注意不要无意中暴露过多的细节。
 Error objects MAY also include custom server-defined name/value pairs that MAY be specific to the code.
+错误对象还可以包括特定于代码的自定义服务器定义的键值对。
 Error types with custom server-defined properties SHOULD be declared in the service's metadata document.
 See example below.
+带有自定义服务器定义属性的错误类型应该在服务的元数据文档中声明。请参见下面的例子。
 
 Error responses MAY contain [annotations][odata-json-annotations] in any of their JSON objects.
+错误响应返回的的任何JSON对象中都可能包含注释[annotations][odata-json-annotations]。
 
 We recommend that for any transient errors that may be retried, services SHOULD include a Retry-After HTTP header indicating the minimum number of seconds that clients SHOULD wait before attempting the operation again.
+我们建议，对于任何可能重试的临时错误，服务应该包含一个 Retry-After HTTP头，告诉客户端在再次尝试操作之前应该等待的最小秒数。
 
 ##### ErrorResponse : Object
 
@@ -705,7 +770,7 @@ Property | Type | Required | Description
 
 Property | Type | Required | Description
 -------- | ---- | -------- | -----------
-`code` | String | ✔ | One of a server-defined set of error codes.
+`code` | String | ✔ | 服务器定义的错误代码集之一。
 `message` | String | ✔ | A human-readable representation of the error.
 `target` | String |  | The target of the error.
 `details` | Error[] |  | An array of details about specific errors that led to this reported error.
@@ -721,6 +786,7 @@ Property | Type | Required | Description
 ##### Examples
 
 Example of "innererror":
+内部错误的例子:
 
 ```json
 {
@@ -746,11 +812,16 @@ Example of "innererror":
 ```
 
 In this example, the most basic error code is "BadArgument," but for clients that are interested, there are more specific error codes in "innererror."
+在本例中，基本的错误代码是“BadArgument”，但是对于感兴趣的客户端，“innererror”中提供了更具体的错误代码。
 The "PasswordReuseNotAllowed" code may have been added by the service at a later date, having previously only returned "PasswordDoesNotMeetPolicy."
+“passwordreusenotal”代码可能是在之后的迭代中由该服务添加的，之前只返回“passwordnotmeetpolicy”。
 Existing clients do not break when the new error code is added, but new clients MAY take advantage of it.
+这种增量型的添加方式并不会破坏老的客户端的处理过程，而又可以给开发者一些更详细的信息。
 The "PasswordDoesNotMeetPolicy" error also includes additional name/value pairs that allow the client to determine the server's configuration, validate the user's input programmatically, or present the server's constraints to the user within the client's own localized messaging.
+“PasswordDoesNotMeetPolicy”错误还包括额外的键值对，这些键值对 允许客户机确定服务器的配置、以编程方式验证用户的输入，或者在客户机自己的本地化消息传递中向用户显示服务器的约束。
 
 Example of "details":
+“details”例子:
 
 ```json
 {
@@ -780,18 +851,23 @@ Example of "details":
 ```
 
 In this example there were multiple problems with the request, with each individual error listed in "details."
+在本例中，请求存在多处问题，每个错误都列在 “details” 字段中进行返回了。
 
-### 7.11. HTTP Status Codes
+### 7.11. HTTP状态代码
 
 Standard HTTP Status Codes SHOULD be used; see the HTTP Status Code definitions for more information.
+应使用标准HTTP状态码作为响应状态码; 更多信息，请参见HTTP状态代码定义。
 
-### 7.12. Client library optional
+### 7.12. 可选的客户端库
 
 Developers MUST be able to develop on a wide variety of platforms and languages, such as Windows, macOS, Linux, C#, Python, Node.js, and Ruby.
+开发人员必须能够在各种平台和语言上进行开发，比如Windows、macOS、Linux、c#、Python和Node.js或是Ruby。
 
 Services SHOULD be able to be accessed from simple HTTP tools such as curl without significant effort.
+服务应该能够让简单的HTTP工具(如curl)进行访问，而不需要做太多的工作。
 
 Service developer portals SHOULD provide the equivalent of "Get Developer Token" to facilitate experimentation and curl support.
+该服务提供给开发人员的网站应该提供相当于“获得开发者令牌(Get developer Token)的功能，以帮助开发人员测试并应提供curl支持。
 
 ## 8. CORS
 
@@ -1325,7 +1401,7 @@ Dates represented in JSON are serialized using the following grammar.
 Informally, a `DateValue` is either an ISO 8601-formatted string or a JSON object containing two properties named `kind` and `value` that together define a point in time.
 The following is not a context-free grammar; in particular, the interpretation of `DateValue` depends on the value of `DateKind`, but this minimizes the number of productions required to describe the format.
 
-```
+```text
 DateLiteral:
   Iso8601Literal
   StructuredDateLiteral
@@ -2195,7 +2271,7 @@ The API must support at least the operations described here.
 A client creates a subscription by issuing a POST request against the subscriptions resource.
 The subscription namespace is client-defined via the POST operation.
 
-```
+```text
 https://api.contoso.com/apiVersion/$subscriptions
 ```
 
