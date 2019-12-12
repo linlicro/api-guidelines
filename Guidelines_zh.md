@@ -941,30 +941,38 @@ Services used by interactive Web clients where performance is critical SHOULD av
 在JSONP中，服务采用指示格式的参数($format=json)和表示回调的参数($callback=someFunc)，并返回一个 text/javascript 文档，其中包含用指定名称封装在函数调用中的JSON响应。
 更多关于JSONP的信息，请访问 [JSONP](https://en.wikipedia.org/wiki/JSONP).
 
-## 9. Collections
+## 9. Collections 集合
 
-### 9.1. Item keys
+### 9.1. Item keys 主键
 
 Services MAY support durable identifiers for each item in the collection, and that identifier SHOULD be represented in JSON as "id". These durable identifiers are often used as item keys.
+服务可以支持集合中每个项的持久标识符(主键)，该标识符应用JSON表示为”id” , 这些持久标识符通常用作项目的key。
 
 Collections that support durable identifiers MAY support delta queries.
+支持持久标识符(主键)的集合可以支持增量查询。
 
-### 9.2. Serialization
+### 9.2. Serialization 序列化
 
 Collections are represented in JSON using standard array notation.
+集合使用标准数组表示法以JSON表示。
 
-### 9.3. Collection URL patterns
+### 9.3. Collection URL patterns 集合的URL模式
 
 Collections are located directly under the service root when they are top level, or as a segment under another resource when scoped to that resource.
+集合在顶级时直接位于服务的根目录下，或者作用于该资源时作为另一个资源下的段。
 
 For example:
+例如:
 
 ```http
 GET https://api.contoso.com/v1.0/people
 ```
 
 Whenever possible, services MUST support the "/" pattern.
+服务必须尽可能支持“/” 匹配。
+
 For example:
+例如:
 
 ```http
 GET https://{serviceRoot}/{collection}/{id}
@@ -972,14 +980,16 @@ GET https://{serviceRoot}/{collection}/{id}
 
 Where:
 
-- {serviceRoot} – the combination of host (site URL) + the root path to the service
-- {collection} – the name of the collection, unabbreviated, pluralized
-- {id} – the value of the unique id property. When using the "/" pattern this MUST be the raw string/number/guid value with no quoting but properly escaped to fit in a URL segment.
+- {serviceRoot} – 站点URL (site URL) + 服务的根路径的组合
+- {collection} – 集合的名称，未缩写，复数
+- {id} – 唯一id属性的值. 当使用 “/“ 匹配必须属于 string/number/guid value 不带引号，转义正确以适应URL。
 
-#### 9.3.1. Nested collections and properties
+#### 9.3.1. Nested collections and properties 嵌套集合和属性
 
 Collection items MAY contain other collections.
+集合可以包含其他集合。
 For example, a user collection MAY contain user resources that have multiple addresses:
+例如，用户集合可能包含多个地址的用户资源:
 
 ```http
 GET https://api.contoso.com/v1.0/people/123/addresses
@@ -994,14 +1004,20 @@ GET https://api.contoso.com/v1.0/people/123/addresses
 }
 ```
 
-### 9.4. Big collections
+### 9.4. Big collections 大集合
 
 As data grows, so do collections.
+随着数据的增长，集合也在增长
 Planning for pagination is important for all services.
+所以计划采用分页对所有服务都很重要。
 Therefore, when multiple pages are available, the serialization payload MUST contain the opaque URL for the next page as appropriate.
+因此，当数据包含多页时，序列化有效负载(payload)必须适当地包含下一页的不透明URL。
+
 Refer to the paging guidance for more details.
+有关详细信息，请参阅分页指南。
 
 Clients MUST be resilient to collection data being either paged or nonpaged for any given request.
+客户端必须能够恰当的处理请求返回的任何给定的分页或非分页集合数据。
 
 ```json
 {
@@ -1015,19 +1031,24 @@ Clients MUST be resilient to collection data being either paged or nonpaged for 
 }
 ```
 
-### 9.5. Changing collections
+### 9.5. Changing collections 变化的集合
 
 POST requests are not idempotent.
+POST请求不是幂等的。
 This means that two POST requests sent to a collection resource with exactly the same payload MAY lead to multiple items being created in that collection.
+这意味着发送到具有完全相同的有效负载(payload)的集合资源的两次POST请求可能导致在该集合中创建多个项。
 This is often the case for insert operations on items with a server-side generated id.
+例如，对于具有服务器端生成的id的项的插入操作，通常就是这种情况。
 
 For example, the following request:
+例如，以下请求:
 
 ```http
 POST https://api.contoso.com/v1.0/people
 ```
 
 Would lead to a response indicating the location of the new collection item:
+会导致响应，指示新集合项的位置：
 
 ```http
 201 Created
@@ -1035,6 +1056,7 @@ Location: https://api.contoso.com/v1.0/people/123
 ```
 
 And once executed again, would likely lead to another resource:
+一旦再次执行，可能会导致创建另一个资源：
 
 ```http
 201 Created
@@ -1042,34 +1064,46 @@ Location: https://api.contoso.com/v1.0/people/124
 ```
 
 While a PUT request would require the indication of the collection item with the corresponding key instead:
+而PUT请求则需要使用相应的键来指示集合项:
 
 ```http
 PUT https://api.contoso.com/v1.0/people/123
 ```
 
-### 9.6. Sorting collections
+### 9.6. Sorting collections 可排序集合
 
 The results of a collection query MAY be sorted based on property values.
+可以基于属性值对集合查询的结果进行排序。
 The property is determined by the value of the _$orderBy_ query parameter.
+该属性由_$orderBy_查询参数的值确定。
 
 The value of the _$orderBy_ parameter contains a comma-separated list of expressions used to sort the items.
+$orderBy 参数的值包含用于对项目进行排序表达式列表，用逗号分隔的。
 A special case of such an expression is a property path terminating on a primitive property.
+这种表达式的特殊情况是属性路径终止于基本属性。
 
 The expression MAY include the suffix "asc" for ascending or "desc" for descending, separated from the property name by one or more spaces.
+表达式可以包含升序的后缀“asc”或降序的后缀“desc”，它们与属性名之间用一个或多个空格分隔。
 If "asc" or "desc" is not specified, the service MUST order by the specified property in ascending order.
+如果没有指定“asc”或“desc”，则服务必须按照指定的属性以升序排序。
 
 NULL values MUST sort as "less than" non-NULL values.
+空值(NULL)必须排序为“小于”非空值。
 
 Items MUST be sorted by the result values of the first expression, and then items with the same value for the first expression are sorted by the result value of the second expression, and so on.
+必须根据第一个表达式的结果值对项进行排序，然后根据第二个表达式的结果值对第一个表达式具有相同值的项进行排序，以此类推。
 The sort order is the inherent order for the type of the property.
+排序顺序是属性类型的固有顺序。
 
 For example:
+例如:
 
 ```http
 GET https://api.contoso.com/v1.0/people?$orderBy=name
 ```
 
 Will return all people sorted by name in ascending order.
+将返回按name进行升序排序的所有人员。
 
 For example:
 
@@ -1078,48 +1112,62 @@ GET https://api.contoso.com/v1.0/people?$orderBy=name desc
 ```
 
 Will return all people sorted by name in descending order.
+将返回按name进行降序排序的所有人。
 
 Sub-sorts can be specified by a comma-separated list of property names with OPTIONAL direction qualifier.
+可以通过逗号分隔的属性名称列表以及可选方向限定符来指定子排序。
 
 For example:
+例如:
 
 ```http
 GET https://api.contoso.com/v1.0/people?$orderBy=name desc,hireDate
 ```
 
 Will return all people sorted by name in descending order and a secondary sort order of hireDate in ascending order.
+将返回按姓名降序排列的所有人员，并按雇佣日期降序排列的次要排序。
 
 Sorting MUST compose with filtering such that:
+排序必须与筛选相结合，如下:
 
 ```http
 GET https://api.contoso.com/v1.0/people?$filter=name eq 'david'&$orderBy=hireDate
 ```
 
 Will return all people whose name is David sorted in ascending order by hireDate.
+将返回所有名称为David的人，按雇佣日期按升序排列。
 
 #### 9.6.1. Interpreting a sorting expression
 
 Sorting parameters MUST be consistent across pages, as both client and server-side paging is fully compatible with sorting.
+跨页面的排序参数必须一致，因为客户端和服务器端分页都依赖该排序该参数进行排序。
 
 If a service does not support sorting by a property named in a _$orderBy_ expression, the service MUST respond with an error message as defined in the Responding to Unsupported Requests section.
+如果服务不支持按_$orderBy_表达式中命名的属性排序，则服务必须按照“响应不支持的请求”部分中定义的错误消息进行响应。
 
-### 9.7. Filtering
+### 9.7. Filtering 过滤
 
 The _$filter_ querystring parameter allows clients to filter a collection of resources that are addressed by a request URL.
+$filter_querystring 参数允许客户端通过URL过滤集合。
 The expression specified with _$filter_ is evaluated for each resource in the collection, and only items where the expression evaluates to true are included in the response.
+使用_$filter_指定的表达式将为集合中的每个资源求值，只有表达式求值为true的项才包含在响应中。
 Resources for which the expression evaluates to false or to null, or which reference properties that are unavailable due to permissions, are omitted from the response.
+表达式计算为false或null的资源，或由于权限而不可用的引用属性，将从响应中省略。
 
 Example: return all Products whose Price is less than $10.00
+例如:返回所有产品的价格低于10.00美元
 
 ```http
 GET https://api.contoso.com/v1.0/products?$filter=price lt 10.00
 ```
 
 The value of the _$filter_ option is a Boolean expression.
+$filter_选项的值是 一个布尔表达式 表示 price less than 10.00。
 
-#### 9.7.1. Filter operations
+#### 9.7.1. Filter operations 过滤操作
 
 Services that support _$filter_ SHOULD support the following minimal set of operations.
+支持_$filter_的服务应该支持以下最小操作集。
 
 Operator             | Description           | Example
 -------------------- | --------------------- | -----------------------------------------------------
@@ -1137,45 +1185,54 @@ not                  | Logical negation      | not price le 3.5
 Grouping Operators   |                       |
 ( )                  | Precedence grouping   | (priority eq 1 or city eq 'Redmond') and price gt 100
 
-#### 9.7.2. Operator examples
+#### 9.7.2. Operator examples 示例
 
 The following examples illustrate the use and semantics of each of the logical operators.
+下面的示例说明了每个逻辑操作符的用法和语义。
 
 Example: all products with a name equal to 'Milk'
+示例:所有名称等于“Milk”的产品
 
 ```http
 GET https://api.contoso.com/v1.0/products?$filter=name eq 'Milk'
 ```
 
 Example: all products with a name not equal to 'Milk'
+示例:所有名称不等于“Milk”的产品
 
 ```http
 GET https://api.contoso.com/v1.0/products?$filter=name ne 'Milk'
 ```
 
 Example: all products with the name 'Milk' that also have a price less than 2.55:
+示例:所有标有“Milk”的产品价格都低于2.55:
 
 ```http
 GET https://api.contoso.com/v1.0/products?$filter=name eq 'Milk' and price lt 2.55
 ```
 
 Example: all products that either have the name 'Milk' or have a price less than 2.55:
+示例:所有标有“Milk”字样或价格低于2.55美元的产品:
 
 ```http
 GET https://api.contoso.com/v1.0/products?$filter=name eq 'Milk' or price lt 2.55
 ```
 
 Example 54: all products that have the name 'Milk' or 'Eggs' and have a price less than 2.55:
+示例:所有名称为“牛奶”或“鸡蛋”且价格低于2.55的产品:
 
 ```http
 GET https://api.contoso.com/v1.0/products?$filter=(name eq 'Milk' or name eq 'Eggs') and price lt 2.55
 ```
 
-#### 9.7.3. Operator precedence
+#### 9.7.3. Operator precedence 操作符的优先级
 
 Services MUST use the following operator precedence for supported operators when evaluating _$filter_ expressions.
+在计算_$filter_表达式时，服务使用以下操作符优先级。
 Operators are listed by category in order of precedence from highest to lowest.
+操作符按类别按优先级从高到低排列。
 Operators in the same category have equal precedence:
+同一类别的运算符具有同等优先级:
 
 | Group           | Operator | Description           |
 |:----------------|:---------|:----------------------|
@@ -1190,23 +1247,32 @@ Operators in the same category have equal precedence:
 | Conditional AND | and      | Logical And           |
 | Conditional OR  | or       | Logical Or            |
 
-### 9.8. Pagination
+### 9.8. Pagination 分页
 
 RESTful APIs that return collections MAY return partial sets.
+返回集合的RESTful API可能返回部分集。
 Consumers of these services MUST expect partial result sets and correctly page through to retrieve an entire set.
+这些服务的消费者清楚将获得部分结果集，并能正确地翻页以检索整个结果集。
 
 There are two forms of pagination that MAY be supported by RESTful APIs.
+RESTful API可能支持两种形式的分页。
 Server-driven paging mitigates against denial-of-service attacks by forcibly paginating a request over multiple response payloads.
+服务器驱动的分页：通过在多个响应有效载荷上强制分页请求来减轻拒绝服务攻击。
 Client-driven paging enables clients to request only the number of resources that it can use at a given time.
+客户端驱动的分页：允许客户机只请求它在给定时间可以使用的资源数量。
 
 Sorting and Filtering parameters MUST be consistent across pages, because both client- and server-side paging is fully compatible with both filtering and sorting.
+跨页面的排序和筛选参数必须一致，因为客户端和服务器端分页都完全兼容于筛选和排序。
 
-#### 9.8.1. Server-driven paging
+#### 9.8.1. Server-driven paging 服务器驱动的分页
 
 Paginated responses MUST indicate a partial result by including a continuation token in the response.
+分页响应必须通过在响应中包含延续分页标记来告诉客户端这是部分结果。
 The absence of a continuation token means that no additional pages are available.
+没有延续分页标记意味着没有下一页了。
 
 Clients MUST treat the continuation URL as opaque, which means that query options may not be changed while iterating over a set of partial results.
+客户端必须将延续URL视为不透明的，这意味着在迭代一组部分结果时，查询选项可能不会更改。
 
 Example:
 
@@ -1224,16 +1290,21 @@ Content-Type: application/json
 }
 ```
 
-#### 9.8.2. Client-driven paging
+#### 9.8.2. Client-driven paging 客户端驱动的分页
 
 Clients MAY use _$top_ and _$skip_ query parameters to specify a number of results to return and an offset into the collection.
+客户端可以使用$top_和$skip_查询参数来指定返回的结果数量和跳过的集合数量。
 
 The server SHOULD honor the values specified by the client; however, clients MUST be prepared to handle responses that contain a different page size or contain a continuation token.
+服务器应遵守客户端指定的参数; 但是，客户端必须做好准备处理包含不同页面大小的响应或包含延续分页标记的响应
 
 When both _$top_ and _$skip_ are given by a client, the server SHOULD first apply _$skip_ and then _$top_ on the collection.
+当客户端同时提供$top_和$skip_时，服务器应该首先应用$skip_，然后对集合应用$top_。
 
 Note: If the server can't honor _$top_ and/or _$skip_, the server MUST return an error to the client informing about it instead of just ignoring the query options.
+注意:如果服务器不能执行$top_和/或$skip_，服务器必须返回一个错误给客户端，告知它，而不是忽略该查询参数。
 This will avoid the risk of the client making assumptions about the data returned.
+这将避免客户端对返回的数据做出假设的风险。
 
 Example:
 
@@ -1250,34 +1321,47 @@ Content-Type: application/json
 }
 ```
 
-#### 9.8.3. Additional considerations
+#### 9.8.3. Additional considerations 其他注意事项
 
 **Stable order prerequisite:** Both forms of paging depend on the collection of items having a stable order.
 The server MUST supplement any specified order criteria with additional sorts (typically by key) to ensure that items are always ordered consistently.
+**固定的顺序先决条件:** 两种分页形式都依赖于具有固定顺序的项的集合。
+服务器必须使用额外的排序(通常是按键排序)来补充任何指定的顺序标准，以确保项目始终保持一致的顺序。
 
 **Missing/repeated results:** Even if the server enforces a consistent sort order, results MAY be missing or repeated based on creation or deletion of other resources.
 Clients MUST be prepared to deal with these discrepancies.
+**缺失/重复结果**：即使服务器强制执行一致的排序顺序，结果也可能会因创建或删除其他资源而导致丢失或重复。客户端必须准备好处理这些差异。
 The server SHOULD always encode the record ID of the last read record, helping the client in the process of managing repeated/missing results.
+服务器应该总是编码最后读取记录的记录ID，帮助客户端管理重复/丢失的结果。
 
 **Combining client- and server-driven paging:** Note that client-driven paging does not preclude server-driven paging.
 If the page size requested by the client is larger than the default page size supported by the server, the expected response would be the number of results specified by the client, paginated as specified by the server paging settings.
+**结合客户端和服务驱动的分页：** 请注意，客户端驱动的分页不排除服务器驱动的分页。
+如果客户端请求的页面大小大于服务器支持的默认页面大小，则预期响应将是客户端指定的结果数，否则按服务端分页设置的指定分页。
 
 **Page Size:** Clients MAY request server-driven paging with a specific page size by specifying a _$maxpagesize_ preference.
+**页面大小：**客户端可以通过指定_$maxpagesize_首选项来请求具有特定页面大小的服务端驱动的分页。
 The server SHOULD honor this preference if the specified page size is smaller than the server's default page size.
+如果指定的页面大小小于服务端的默认页面大小，服务器应该遵循此首选项。
 
 **Paginating embedded collections:** It is possible for both client-driven paging and server-driven paging to be applied to embedded collections.
+**分页嵌入式集合：**客户端驱动的分页和服务端驱动的分页都可以应用于嵌入式集合。
 If a server paginates an embedded collection, it MUST include additional continuation tokens as appropriate.
+如果服务端对嵌入式集合进行分页，则必须包含其他适当的延续分页标记。
 
 **Recordset count:** Developers who want to know the full number of records across all pages, MAY include the query parameter _$count=true_ to tell the server to include the count of items in the response.
+**记录集计数：**想要知道所有页面中的完整记录数的开发人员可以包含查询参数_$ count=true_，以告知服务端包含响应中的记录数。
 
-### 9.9. Compound collection operations
+### 9.9. Compound collection operations 集合复合操作
 
 Filtering, Sorting and Pagination operations MAY all be performed against a given collection.
+筛选、排序和分页操作都可以针对给定的集合执行。
 When these operations are performed together, the evaluation order MUST be:
+当这些操作一起执行时，评估顺序必须是:
 
-1. **Filtering**. This includes all range expressions performed as an AND operation.
-2. **Sorting**. The potentially filtered list is sorted according to the sort criteria.
-3. **Pagination**. The materialized paginated view is presented over the filtered, sorted list. This applies to both server-driven pagination and client-driven pagination.
+1. **筛选**。这包括作为AND操作执行的所有范围表达式。
+2. **排序**。可能已过滤的列表根据排序条件进行排序。
+3. **分页**。经过筛选和排序的列表上显示了实现分页视图。这适用于服务器驱动的分页和客户端驱动的分页。
 
 ## 10. Delta queries
 
