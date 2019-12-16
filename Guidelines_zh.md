@@ -1363,40 +1363,55 @@ When these operations are performed together, the evaluation order MUST be:
 2. **排序**。可能已过滤的列表根据排序条件进行排序。
 3. **分页**。经过筛选和排序的列表上显示了实现分页视图。这适用于服务器驱动的分页和客户端驱动的分页。
 
-## 10. Delta queries
+## 10. Delta queries 增量查询
 
 Services MAY choose to support delta queries.
+服务可以支持增量查询。
 
-### 10.1. Delta links
+注：增量查询可以使客户端能够发现新创建、更新或者删除的实体，无需使用每个请求对目标资源执行完全读取。这让客户端的调用更加高效。
+
+### 10.1. Delta links Delta链接
 
 Delta links are opaque, service-generated links that the client uses to retrieve subsequent changes to a result.
+Delta链接是不透明的、由服务生成的链接，客户端使用Delta链接对结果做后续修改。
 
 At a conceptual level delta links are based on a defining query that describes the set of results for which changes are being tracked.
+在概念层面上，delta链接基于一个定义查询，该查询描述正在跟踪更改的一组结果集。
+
 The delta link encodes the collection of entities for which changes are being tracked, along with a starting point from which to track changes.
+Delta链接编码正在跟踪变更的实体集合，以及跟踪更改的起点。
 
 If the query contains a filter, the response MUST include only changes to entities matching the specified criteria.
+如果查询包含筛选器，则响应必须只包含对匹配指定条件的实体的更改。
 The key principles of the Delta Query are:
+Delta查询的主要原则是:
 
-- Every item in the set MUST have a persistent identifier. That identifier SHOULD be represented as "id". This identifier is a service defined opaque string that MAY be used by the client to track object across calls.
-- The delta MUST contain an entry for each entity that newly matches the specified criteria, and MUST contain a "@removed" entry for each entity that no longer matches the criteria.
-- Re-evaluate the query and compare it to original set of results; every entry uniquely in the current set MUST be returned as an Add operation, and every entry uniquely in the original set MUST be returned as a "remove" operation.
-- Each entity that previously did not match the criteria but matches it now MUST be returned as an "add"; conversely, each entity that previously matched the query but no longer does MUST be returned as a "@removed" entry.
-- Entities that have changed MUST be included in the set using their standard representation.
-- Services MAY add additional metadata to the "@removed" node, such as a reason for removal, or a "removed at" timestamp. We recommend teams coordinate with the Microsoft REST API Guidelines Working Group on extensions to help maintain consistency.
+- Every item in the set MUST have a persistent identifier. That identifier SHOULD be represented as "id". This identifier is a service defined opaque string that MAY be used by the client to track object across calls. 集合中的每个项目必须具有持久标识符（永久不变的主键）。该标识符应该表示为“id”。此标识符由服务定义，客户端可以使用该字符串跨调用跟踪对象。
+- The delta MUST contain an entry for each entity that newly matches the specified criteria, and MUST contain a "@removed" entry for each entity that no longer matches the criteria. delta 必须包含每个与指定条件新匹配的实体的条目，并且必须为每个不再符合条件的实体包含“@removed”条目。
+- Re-evaluate the query and compare it to original set of results; every entry uniquely in the current set MUST be returned as an Add operation, and every entry uniquely in the original set MUST be returned as a "remove" operation. 重新调用查询并将其与原始结果集进行比较; 必须将当前集合中惟一的每个条目作为”add”操作返回，并且必须将原始集合中惟一的每个条目作为“remove”操作返回。。
+- Each entity that previously did not match the criteria but matches it now MUST be returned as an "add"; conversely, each entity that previously matched the query but no longer does MUST be returned as a "@removed" entry. 以前与标准不匹配但现在匹配的每个实体必须作为”add”返回; 相反，先前与查询匹配但不再必须返回的每个实体必须作为“@removed”条目返回。
+- Entities that have changed MUST be included in the set using their standard representation. 已更改的实体必须使用其标准表示形式包含在集合中。
+- Services MAY add additional metadata to the "@removed" node, such as a reason for removal, or a "removed at" timestamp. We recommend teams coordinate with the Microsoft REST API Guidelines Working Group on extensions to help maintain consistency. 服务可以向“@remove”节点添加额外的元数据，例如删除的原因或“removed at”时间戳。我们建议团队与Microsoft REST API指导原则工作组协调，以帮助维护一致性。
 
 The delta link MUST NOT encode any client top or skip value.
+Delta链接不能编码任何客户端 top 或 skip 值。
 
 ### 10.2. Entity representation
 
 Added and updated entities are represented in the entity set using their standard representation.
+添加和更新的实体使用其标准表示在实体集中表示。
 From the perspective of the set, there is no difference between an added or updated entity.
+从集合的角度来看，添加或更新的实体之间没有区别。
 
 Removed entities are represented using only their "id" and an "@removed" node.
+删除的实体仅使用其“id”和“@removed”节点表示。
 The presence of an "@removed" node MUST represent the removal of the entry from the set.
+“@removed”节点的存在必须表示从集合中删除条目。
 
-### 10.3. Obtaining a delta link
+### 10.3. Obtaining a delta link 获取delta链接
 
 A delta link is obtained by querying a collection or entity and appending a $delta query string parameter.
+通过查询集合或实体并附加 $delta 查询字符串参数来获得 Delta 链接。
 For example:
 
 ```http
@@ -1418,20 +1433,28 @@ Content-Type: application/json
 ```
 
 Note: If the collection is paginated the deltaLink will only be present on the final page but MUST reflect any changes to the data returned across all pages.
+注意:如果集合分页，deltaLink将只出现在最后一页，但必须反映对所有页面返回的数据的任何更改。
 
-### 10.4. Contents of a delta link response
+### 10.4. Contents of a delta link response delta链接的响应内容
 
 Added/Updated entries MUST appear as regular JSON objects, with regular item properties.
+添加/更新的条目必须以常规JSON对象的形式出现，并带有常规项目属性。
 Returning the added/modified items in their regular representation allows the client to merge them into their existing "cache" using standard merge concepts based on the "id" field.
+在常规表示中返回添加/修改的项，允许客户端使用基于“id”字段的标准合并概念将它们合并到现有的“缓存”中。
 
 Entries removed from the defined collection MUST be included in the response.
+从定义的集合中删除的条目必须包含在响应中。
 Items removed from the set MUST be represented using only their "id" and an "@removed" node.
+从集合中删除的项必须仅使用它们的“id”和“@remove”节点表示。
 
-### 10.5. Using a delta link
+### 10.5. Using a delta link 使用 dela链接
 
 The client requests changes by invoking the GET method on the delta link.
+客户端通过调用delta链接上的GET方法请求更改。
 The client MUST use the delta URL as is -- in other words the client MUST NOT modify the URL in any way (e.g., parsing it and adding additional query string parameters).
+客户端必须按原样使用delta URL——换句话说，客户端不能以任何方式修改URL(例如，解析URL并添加额外的查询字符串参数)。
 In this example:
+例子:
 
 ```http
 GET https://{opaqueUrl} HTTP/1.1
@@ -1452,11 +1475,15 @@ Content-Type: application/json
 ```
 
 The results of a request against the delta link may span multiple pages but MUST be ordered by the service across all pages in such a way as to ensure a deterministic result when applied in order to the response that contained the delta link.
+针对delta链接的请求的结果可以跨多个页面，但是必须由服务跨所有页面进行排序，以便在应用到包含delta链接的响应时确保得到确定的结果。
 
 If no changes have occurred, the response is an empty collection that contains a delta link for subsequent changes if requested.
+如果没有发生任何更改，则响应是一个空集合，其中包含一个delta链接，用于根据请求进行后续更改。
 This delta link MAY be identical to the delta link resulting in the empty collection of changes.
+这个delta链接可能与delta链接相同，从而导致更改的空集合。
 
 If the delta link is no longer valid, the service MUST respond with _410 Gone_. The response SHOULD include a Location header that the client can use to retrieve a new baseline set of results.
+如果delta链接不再有效，则服务必须使用_410 Gone_响应。响应应该包含一个Location头，客户端可以使用它来检索新的基线结果集。
 
 ## 11. JSON standardizations
 
